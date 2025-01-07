@@ -1,0 +1,4 @@
+baseURL = 'https://henningschroeder.github.io/'
+languageCode = 'en-us'
+title = 'Hennings Blog'
+theme = 'ananke'
