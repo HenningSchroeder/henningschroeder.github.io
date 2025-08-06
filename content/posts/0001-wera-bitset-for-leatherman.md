@@ -22,3 +22,9 @@ Converting a Wera bit set into a Leatherman bit set supporting the Skeletool and
 ## Result
 
 A very complete regular bitset with the adapter to match your Leatherman multitool.
+
+![Wera Bit Set assembled](/img/0001-wera-bitset-assembled.jpg)
+
+Typicaly the adapter fits very snug but you luckily have a Leatherman with you.
+
+![Wera Bit Set opened](/img/0001-wera-bitset-opened.jpg)
