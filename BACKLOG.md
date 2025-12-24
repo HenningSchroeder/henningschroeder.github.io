@@ -42,87 +42,241 @@ Each entry aims to: provide setup/config instructions, include tested code sampl
 
 #### Entry 01 — Lab Baseline (Manual Execution)
 - [ ] Setup: Ubuntu LTS VM, install Docker, Compose, and make. Document prerequisites.
-- [ ] Code: `lab/docker-compose.yml` running a simple service (e.g., Nginx) locally.
+- [ ] Code: `lab/docker-compose.yml` running Nginx and a simple FastAPI app.
 - [ ] ADR: Lab baseline rationale (VM vs bare metal), tooling choices.
-- [ ] References: Docker, Compose, Ubuntu docs.
-- [ ] Test: `docker compose up -d` and verify service responds.
+- [ ] Deliverables: Compose file, Makefile, ADR, runbook.
+- [ ] Acceptance: `docker compose up -d` serves both endpoints; docs list prereqs.
+- [ ] AI Assist: Use local LLM (Ollama + CodeLlama/Mistral) to draft Dockerfiles, compose, and runbook text; CLI prompt templates stored in `ai/prompts/lab-baseline.md`.
 
-#### Entry 02 — Terraform Quickstart (Hetzner/DigitalOcean)
+#### Entry 02 — Terraform Quickstart (Hetzner)
 - [ ] Setup: Provider access tokens, minimal `lab/terraform/main.tf` to create a single VM.
-- [ ] Code: `variables.tf`, `outputs.tf`, and a tiny cloud-init to install Docker.
-- [ ] ADR: Provider selection criteria; why not Kubernetes (yet).
-- [ ] References: Terraform provider docs; Hetzner/DigitalOcean guides.
-- [ ] Test: `terraform init && terraform apply` creates VM; `terraform destroy` cleans up.
+- [ ] Code: `variables.tf`, `outputs.tf`, tiny cloud-init to install Docker.
+- [ ] ADR: Provider selection (Hetzner), why not Kubernetes (yet).
+- [ ] Deliverables: Terraform module + sample tfvars; state storage note; signup steps.
+- [ ] Acceptance: `terraform apply`/`destroy` cleanly creates VM; outputs host/IP.
+- [ ] AI Assist: Use local LLM to scaffold TF variables/outputs and cloud-init; run `terraform validate` suggestions only; store prompt in `ai/prompts/terraform-hetzner.md`.
+
+#### Entry 02b — DigitalOcean Terraform + App Platform
+- [ ] Setup: DO access token; minimal Droplet TF plus App Platform static/app deploy.
+- [ ] Code: DO provider config, Droplet example, App Platform spec for Hugo/Go/FastAPI sample.
+- [ ] ADR: When to use DO App Platform vs Droplets; cost vs control; lock-in notes.
+- [ ] Deliverables: TF files, App Platform config, pricing snapshot.
+- [ ] Acceptance: App deploy succeeds; Droplet TF plan/apply/destroy is clean.
+- [ ] AI Assist: Use local LLM to draft App Platform spec and DO TF snippets; compare cost notes; prompts in `ai/prompts/do-app.md`.
 
 #### Entry 03 — Cloud Provider Packaging Spectrum
-- [ ] Setup: Survey DigitalOcean (App Platform, Droplets, Kubernetes, Bare Metal) and Hetzner (Cloud, Storage Box, Dedicated, Colocation) offerings.
-- [ ] Code: Comparison matrix and minimal examples: static site config, containerized app descriptor, VM terraform snippet, bare metal notes.
-- [ ] ADR: When to use each tier (static vs managed app vs containers vs VM vs bare metal); cost vs control trade-offs, vendor lock-in considerations.
-- [ ] References: DigitalOcean App Platform, Hetzner Cloud/Robot docs; pricing calculators.
-- [ ] Test: Deploy a Hugo static site to App Platform; document VM-to-bare-metal migration path.
+- [ ] Setup: Survey DO (App Platform, Droplets, K8s, Bare Metal) and Hetzner (Cloud, Storage Box, Dedicated, Colocation).
+- [ ] Code: Comparison matrix; minimal examples for static, container, VM, bare metal note.
+- [ ] ADR: When to choose each tier; cost/control/lock-in trade-offs.
+- [ ] Deliverables: Matrix (features/cost/ops), sample configs, migration path notes.
+- [ ] Acceptance: Hugo static deployed to App Platform; doc shows VM→bare metal path.
+- [ ] AI Assist: Use LLM to generate comparison matrix draft and migration path narrative; verify numbers manually; prompt in `ai/prompts/provider-spectrum.md`.
 
 #### Entry 04 — Ansible Bootstrap
-- [ ] Setup: `lab/ansible/inventory.ini`, SSH keys, `site.yml` to configure users, firewall, Docker.
-- [ ] Code: Roles/tasks for baseline server config; idempotent runs.
-- [ ] ADR: Idempotency, inventory structure, secrets management outline.
-- [ ] References: Ansible docs, best practices.
-- [ ] Test: `ansible-playbook -i inventory.ini site.yml` configures VM from Entry 02.
+- [ ] Setup: `lab/ansible/inventory.yml`, SSH keys, `site.yml` for users/firewall/Docker.
+- [ ] Code: Role-based structure; idempotent tasks.
+- [ ] ADR: When Ansible adds value over TF; inventory structure; secrets outline.
+- [ ] Deliverables: Playbook + roles, inventory example, decision ADR.
+- [ ] Acceptance: `ansible-playbook ... site.yml` configures VM from Entry 02; idempotent rerun.
+- [ ] AI Assist: Use LLM to draft role/task stubs and inventory templates; lint with `ansible-lint`; prompt in `ai/prompts/ansible-bootstrap.md`.
 
 #### Entry 05 — Essential Infrastructure Services
-- [ ] Setup: Core services: Gitea/GitLab (Git repo), devpi (PyPI mirror), Nginx/Caddy (web/reverse proxy), restic (backup), Let's Encrypt (certs), WireGuard (VPN), Jenkins/Drone/Woodpecker (CI/CD).
-- [ ] Code: Compose stack `lab/services/docker-compose.yml` with volume persistence, health checks, basic auth/TLS where applicable.
-- [ ] ADR: Service selection rationale (lightweight vs full-featured), resource requirements, security posture.
-- [ ] References: Gitea, devpi, Caddy, restic, WireGuard docs; Let's Encrypt integration guides.
-- [ ] Test: Deploy via Ansible; verify Git push, PyPI mirror caching, web serving, backup snapshot, VPN connection, CI pipeline run.
+- [ ] Setup: Core services stack (Gitea/GitLab, devpi, Nginx/Caddy, restic, Let's Encrypt, WireGuard, CI choice).
+- [ ] Code: `lab/services/docker-compose.yml` with volumes, health checks, basic auth/TLS.
+- [ ] ADR: Service selection (lightweight vs full), resource/security posture.
+- [ ] Deliverables: Compose stack, decision matrix for Git/PyPI/proxy/backup/VPN/CI, cert strategy note.
+- [ ] Acceptance: Ansible deploy works; Git push, PyPI cache, web serve, backup snapshot, VPN connect, CI run verified.
+- [ ] AI Assist: Use LLM to propose service matrix pros/cons and generate compose/service stubs; human-verify security-sensitive configs; prompt in `ai/prompts/services.md`.
 
 #### Entry 06 — Runtime Packaging (Compose + LXC/KVM Notes)
-- [ ] Setup: Expand `lab/docker-compose.yml` with a sample app stack (e.g., Nginx + whoami).
-- [ ] Code: Service definitions, healthchecks, volumes; notes comparing LXC/KVM/Proxmox usage.
-- [ ] ADR: When to choose containers vs VMs; trade-offs and patterns.
-- [ ] References: Proxmox, LXC, KVM resources; Docker docs.
-- [ ] Test: Deploy stack on VM via Ansible (copy compose file, run compose).
+- [ ] Setup: Expand compose with sample app stack; note LXC/KVM/Proxmox usage.
+- [ ] Code: Service defs, healthchecks, volumes; comparison notes.
+- [ ] ADR: Containers vs VMs choices; trade-offs.
+- [ ] Deliverables: Updated compose, LXC/KVM/Proxmox comparison table.
+- [ ] Acceptance: Stack deploys via Ansible; healthchecks pass.
+- [ ] AI Assist: LLM to draft comparison table and compose additions; validate against docs; prompt in `ai/prompts/runtime-packaging.md`.
 
 #### Entry 07 — Monitoring & Management
-- [ ] Setup: Minimal Prometheus + Grafana, and management tool (Dockge or Portainer).
-- [ ] Code: Compose files, basic Prometheus scrape config.
-- [ ] ADR: Monitoring scope, operational workflows, tool choice.
-- [ ] References: Prometheus, Grafana, Dockge/Portainer docs.
-- [ ] Test: Services up, dashboards reachable; sample metrics visible.
+- [ ] Setup: Prometheus + Grafana; management tool (Dockge/Portainer) comparison.
+- [ ] Code: Compose files, scrape configs.
+- [ ] ADR: Monitoring scope, workflows, tool choice.
+- [ ] Deliverables: Monitoring compose, exporter list, dashboard set (prebuilt), management tool comparison.
+- [ ] Acceptance: Dashboards reachable; sample metrics visible; management UI works.
+- [ ] AI Assist: LLM to propose exporter list and starter Grafana dashboards JSON; review before use; prompt in `ai/prompts/monitoring.md`.
 
 #### Entry 08 — Observability (Logs/Tracing)
-- [ ] Setup: Add Loki (logs) and consider simple tracing where feasible.
-- [ ] Code: Compose services + config snippets; log shipping.
-- [ ] ADR: Observability boundaries for small labs.
-- [ ] References: Loki, OpenTelemetry.
-- [ ] Test: Logs appear in UI; retention confirmed.
+- [ ] Setup: Loki + Promtail; optional tracing (Jaeger/Tempo) mention.
+- [ ] Code: Compose + configs; log shipping for Docker and system logs.
+- [ ] ADR: Observability boundaries; retention targets.
+- [ ] Deliverables: Logging stack configs, retention policy (weeks), alerting placement clarified.
+- [ ] Acceptance: Logs visible; retention enforced; alert hooks (if any) documented.
+- [ ] AI Assist: LLM to draft Loki/Promtail configs and retention policy text; prompt in `ai/prompts/observability.md`.
 
 #### Entry 09 — CI/CD Pipeline (Gradual Automation)
-- [ ] Setup: GitHub Actions workflow to lint configs and dry-run where possible; manual approvals initially.
-- [ ] Code: `.github/workflows/ci.yml` running `terraform validate`, `ansible-lint`, optional compose checks.
-- [ ] ADR: Secrets handling strategy; staged automation approach.
-- [ ] References: GitHub Actions, Terraform/Ansible linting.
-- [ ] Test: Workflow passes; manual runs apply to test environment.
+- [ ] Setup: GitHub Actions/self-hosted runner/lab CI discussion.
+- [ ] Code: `.github/workflows/ci.yml` with terraform validate, ansible-lint, shellcheck, yamllint, docker lint.
+- [ ] ADR: Secrets handling, approval gates, environment strategy.
+- [ ] Deliverables: Workflow file, environment definitions, rollback/teardown notes for test VMs.
+- [ ] Acceptance: Workflow passes; test env provision/cleanup works; manual approval path documented.
+- [ ] AI Assist: LLM to generate workflow snippets and approval gate language; ensure human review; prompt in `ai/prompts/cicd.md`.
 
 #### Entry 10 — AI Ops Helper (Local LLM)
-- [ ] Setup: Ollama (or alternative), prompt templates for generating Ansible tasks.
-- [ ] Code: Example prompts and generated playbook snippets with human review gates.
-- [ ] ADR: Where agents help vs where humans must validate.
-- [ ] References: Ollama docs; agent frameworks.
-- [ ] Test: Generated snippet passes `ansible-lint` and runs against lab.
+- [ ] Setup: Ollama (or alt), prompts for Ansible/Terraform/troubleshooting/docs.
+- [ ] Code: Prompt library, sample generated playbooks with human review gates.
+- [ ] ADR: Where agents help vs humans; hardware (GPU) use.
+- [ ] Deliverables: Prompt set, evaluation notes per model, integration script, review checklist.
+- [ ] Acceptance: Generated snippet passes lint and runs in lab; review process documented.
+- [ ] AI Assist: Benchmark local models (Llama, Mistral, CodeLlama) via Ollama/LocalAI; capture latency/quality notes; prompt in `ai/prompts/ai-ops.md`.
 
 #### Entry 11 — Security & Secrets
-- [ ] Setup: SOPS with age for encrypting vars; integrate with Ansible/Terraform.
-- [ ] Code: Encrypted `group_vars/` and Terraform secrets patterns.
-- [ ] ADR: Secret storage decisions and rotation strategy.
-- [ ] References: SOPS, age, Ansible Vault comparison.
-- [ ] Test: Decrypt/encrypt cycle works; CI respects secrets.
+- [ ] Setup: SOPS with age; compare Ansible Vault/Vault.
+- [ ] Code: Encrypted `group_vars/`, TF secrets pattern, CI key wiring examples.
+- [ ] ADR: Secret storage, rotation cadence.
+- [ ] Deliverables: SOPS policy, sample encrypted files, CI integration doc.
+- [ ] Acceptance: Decrypt/encrypt cycle works; CI job can read secrets securely.
+- [ ] AI Assist: LLM to draft SOPS policy text and rotation SOP; no secrets shared with the model; prompt in `ai/prompts/security.md`.
 
 #### Entry 12 — OS Support Matrix
-- [ ] Setup: Document Ubuntu LTS as primary; evaluate Windows 11 (WSL2), QNX, ROS 2, Android feasibility.
-- [ ] Code: Where applicable, minimal examples or notes; focus on documentation.
-- [ ] ADR: Scope boundaries and caveats per OS.
-- [ ] References: Official OS docs and community guides.
-- [ ] Test: If feasible, smoke tests on secondary OS; otherwise, documented constraints.
+- [ ] Setup: Ubuntu LTS primary; Windows 11 (WSL2/native), QNX, ROS 2, Android.
+- [ ] Code: Minimal examples/notes per OS.
+- [ ] ADR: Scope boundaries, caveats.
+- [ ] Deliverables: Matrix of support + constraints; smoke-test checklist per OS; unsupported paths documented.
+- [ ] Acceptance: Smoke tests executed/recorded; unsupported noted.
+- [ ] AI Assist: LLM to draft matrix/checklists; ensure human verification for platform specifics; prompt in `ai/prompts/os-matrix.md`.
+
+#### Entry 13 — Remote Access & Connectivity
+- [ ] Setup: Secure connectivity patterns (site-to-site, client VPN, bastion/tunnels).
+- [ ] Code: WireGuard configs, SSH bastion patterns, reverse tunnels (autossh), port-forward snippets.
+- [ ] ADR: VPN vs SSH tunnels vs reverse proxies; identity/MFA; latency/bandwidth trade-offs.
+- [ ] Deliverables: Pattern matrix with pros/cons/cost/ops; threat model note; reference configs; fallback paths.
+- [ ] Acceptance: Cloud-to-lab reachability proven with least privilege; monitoring over tunnel validated; performance targets noted.
+- [ ] Investigation: Overview of patterns with selection guidance.
+- [ ] AI Assist: LLM to draft pattern matrix and bastion/tunnel guides; sanitize before use; prompt in `ai/prompts/remote-access.md`.
+
+#### Entry 14 — Simulation, Digital Twins, and X-in-the-Loop
+- [ ] Setup: Define SIL/HIL/PIL; when to use cloud vs lab vs colo.
+- [ ] Code: Simulator scaffold (containerized), compose/QEMU example, CI hook for sims.
+- [ ] ADR: Fidelity vs cost vs performance; time sync; when to add HIL.
+- [ ] Deliverables: Tooling comparison (ROS 2 + Gazebo/Ignition, QEMU/KVM, lightweight sims); licensing/perf notes.
+- [ ] Robotics focus: Chapter for full robot/arm sim (ROS 2 MoveIt + Gazebo/Ignition), kinematics/collision/latency notes, sample configs, CI integration.
+- [ ] Acceptance: Sim workload reachable from app stack; telemetry flows validated; CI sim job defined.
+- [ ] AI Assist: LLM to draft sim architecture notes and MoveIt/Gazebo config stubs; keep models offline; prompt in `ai/prompts/simulation.md`.
+
+---
+
+## Open Points Requiring Your Input
+
+In general assume the simplest solution which does not cause problems when scaling more professional / bigger. Consider a really big setup but do not yet implement for it. e.g. webhooks are a universal CI/CD trigger so even use them in a POC based on ssh git user. Also consider at least the three major sites. Cloud based for scaling services, HomeLab/Prototype for investigation and learning and Production as colocated robust execution setup for actual HW. Solutions in the cloud should have Offlinbe capable fallbacks Github -> GitLab CE / Gitea + Webhooks and Local solutions like Proxmox should have a scale option into the cloud. Also consider the challenge of accesibility / remote access. Also asssume scale from POC level which proves the viability to a MVP setup which gets the customer going towards a sustained and optimized solution. We expect high velocity and various direction changes. Keep the environment sufficiently agile.
+
+### Entry 01 — Lab Baseline
+- [ ] **VM Platform:** Which hypervisor? Start with KVM/libvirt
+- [ ] **Ubuntu Version:** Ubuntu 24.04 LTS and compatibel with 25.10
+- [ ] **Resource Allocation:** Preferred VM specs (CPUs, RAM, disk)? start small, 2 vCPU,  4GB Ram, 20GB disk 
+- [ ] **Base Service:** Nginx is suggested and simple Python app based on FastAPI.
+- [ ] **Tooling:** Confirm Docker, Compose, git, curl, ssh cleint and server, python?
+
+### Entry 02 — Terraform Quickstart
+- [ ] **Provider Choice:** Start with Hetzner and make DigitalOcean another blog entry
+- [ ] **Credentials:** cover the initial signup
+- [ ] **VM Size:** Preferred instance type for demos Smallest and cheapest from hetzner
+- [ ] **Region:** Preferred datacenter region is EU / Germany
+- [ ] **Terraform Version:** latest stable and compatible with Hetzner and Digital Ocean.
+- [ ] **State Storage:** Local `terraform.tfstate` initially, mention the options for more robust / professional solution. If possible backed by git
+
+### Entry 03 — Cloud Provider Packaging Spectrum
+- [ ] **Focus Providers:** DigitalOcean and Hetzner in focus, mention key benefits of others like (AWS Lightsail, Linode, Vultr)
+- [ ] **App Deployment Test:** Deploy a Simple Python app as demo, if sensible use a Go app which has no runtime dependencies.
+- [ ] **Bare Metal Scope:** Actual bare metal provisioning steps as concept. Detailed can become a later blog.
+- [ ] **Cost Analysis:** Include real pricing comparisons
+- [ ] **Kubernetes:** omit for now
+
+### Entry 04 — Ansible Bootstrap, Shall only be considered if there are benefits over teraform
+- [ ] **Ansible Version:** Use ansible-core latest stable compatible with Hetzner and Digital Ocean.
+- [ ] **Inventory Format:** YAML inventory files
+- [ ] **User Management:** Create a dedicated non-root user (e.g., `deploy`)
+- [ ] **SSH Keys:** Document key generation and distribution
+- [ ] **Firewall Tool:** ufw (Ubuntu default) or nftables/iptables should be discussed. the "better" solution should get documented.
+- [ ] **Baseline Packages:** packages beyond Docker should be git, python and a demo service.
+- [ ] **Ansible Structure:** role-based from the start
+
+### Entry 05 — Essential Infrastructure Services
+- [ ] **Git Service:** Gitea (lightweight) or GitLab CE (full-featured), provide a analysis of options from simple git user with ssh up to GitLab. 
+- [ ] **PyPI Mirror:** devpi confirmed, or consider alternatives (pypiserver, bandersnatch), provide an analysis of pros and cons.
+- [ ] **Web/Reverse Proxy:** Nginx or Caddy (automatic HTTPS), provide an analysis
+- [ ] **Backup Tool:** restic confirmed, or consider borg, duplicity, provide an analysis
+- [ ] **Backup Target:** Local storage
+- [ ] **VPN:** WireGuard confirmed, or also cover OpenVPN/Tailscale, provide an analysis and if relevant csp compatibility
+- [ ] **CI/CD Platform:** Jenkins, Drone, Woodpecker, or Gitea Actions. Provide an analysis of tool specific and general webhook based options.
+- [ ] **Certificate Strategy:** Let's Encrypt with DNS or HTTP-01 challenge, provide and discuss options
+- [ ] **Domain Names:** localhost/self-signed certs for demo, start with self signed but also document real domain scenario
+- [ ] **Authentication:** Basic auth, OAuth2 (Authelia, Authentik), or per-service auth will be discussed, start simple
+
+### Entry 06 — Runtime Packaging
+- [ ] **Sample App Stack:** Nginx + whoami confirmed, or prefer a more realistic multi-tier app (e.g., web + DB + cache)?
+- [ ] **LXC/KVM Coverage:** Hands-on examples or comparison notes only, comparison and examples
+- [ ] **Proxmox:** conceptually documented, integration with the rest. 
+- [ ] **Container Orchestration:** Stay with Compose
+
+### Entry 07 — Monitoring & Management
+- [ ] **Management Tool:** Dockge or Portainer, try both and compare.
+- [ ] **Prometheus Stack:** Prometheus + Grafana only add Alertmanager or others ifsensible
+- [ ] **Exporters:** Which exporters? (node_exporter, cadvisor, others?) Discuss the concept
+- [ ] **Dashboards:** Pre-built Grafana dashboards or build custom, if grafana is selected (alternatives?) then start with pre built dashboards 
+- [ ] **Alerting:** Set up alert rules in this entry or defer to Entry 08, put it in 08
+
+### Entry 08 — Observability
+- [ ] **Log Aggregation:** Loki + Promtail confirmed, or also consider Fluentd/Fluentbit if there are technical necessity
+- [ ] **Tracing:** Implement basic tracing (Jaeger/Tempo),mention as optional
+- [ ] **Retention Policies:** Specific retention periods for logs should be weeks
+- [ ] **Log Sources:** Docker container logs and also system logs (journald, syslog)
+
+### Entry 09 — CI/CD Pipeline
+- [ ] **Primary CI Platform:** GitHub Actions (cloud), self-hosted runners, or lab CI from Entry 05 should be discussed
+- [ ] **Linting Tools:** terraform validate, ansible-lint, shellcheck—any and others yamllint, docker lint
+- [ ] **Approval Workflow:** Manual approval gates via GitHub Environments with support from tool and AI based checkers.
+- [ ] **Test Environments:** Dedicated test VMs and a potential Test Lab setup.
+- [ ] **Deployment Strategy:** Blue/green, rolling, or simple stop-start has to be discussed. Implement the simple solutions and document the extension stages.
+
+### Entry 10 — AI Ops Helper
+- [ ] **LLM Platform:** Ollama preferred but consider alternatives (LocalAI, LM Studio, vLLM)
+- [ ] **Model Selection:** Guidance for model based on use cases. Coding Reasoning Image generation, text to speech and speech to text. (Llama, Mistral, CodeLlama, Phi?)
+- [ ] **Hardware:** Do you have GPU/acceleration available. Nvidia GPU
+- [ ] **Use Cases:** Focus on Ansible generation, or also Terraform, troubleshooting, documentation? Depends on necessity of ansible vs. terraform. If one solution is sufficient stick with it.
+- [ ] **Integration:** CLI prompts and API calls from scripts. For manual investigation also UI (Open WebUI)?
+- [ ] **Review Process:** Human-in-the-loop via PR, or direct validation scripts should be documented as option
+
+### Entry 11 — Security & Secrets
+- [ ] **Secrets Tool:** SOPS with age confirmed but also compare Ansible Vault, HashiCorp Vault
+- [ ] **Key Management:** age keys on local machine and as option centralized (Vault, cloud KMS)
+- [ ] **Scope:** Encrypt all vars
+- [ ] **Rotation Strategy:** Manual rotation and document automated tooling
+- [ ] **CI Integration:** Document how to provide decryption and signing keys to CI (GitHub Secrets, runner env)
+
+### Entry 12 — OS Support Matrix
+- [ ] **Ubuntu LTS:** 24.04 and 25.10 as bleeding testing
+- [ ] **Windows 11 Scope:** WSL2 and also native tooling (PowerShell, Python and Windows containers)
+- [ ] **QNX:** Real testing planned, or document as conceptual/unsupported, Testing for later blog. Probably the Free version on Raspberry PI
+- [ ] **ROS 2:** Which distro (Humble, Iron)? Docker-based or native install is to be discussed, latest stable version.
+- [ ] **Android:** Termux-SSH based demos and document sdb based native apps.
+- [ ] **Testing Depth:** Full smoke tests where feasible and documentation for not yet available?
+
+### Entry 13 — Remote Access & Connectivity
+- [ ] **Primary Pattern:** Prefer WireGuard site-to-site, client VPN, or bastion + SSH tunnels?
+- [ ] **Jump Hosts/Bastions:** Cloud-hosted bastion, or run inside HomeLab/colo?
+- [ ] **Identity/MFA:** Any requirements for SSO/MFA for admin access? (e.g., Authentik/Authelia, GitHub/GitLab OIDC)
+- [ ] **Port Forwarding/Reverse Tunnels:** Allow ad-hoc `ssh -L/-R` usage? autossh for persistence? Any restrictions?
+- [ ] **Bandwidth/Latency Constraints:** Any targets or limits for remote ops and monitoring traffic?
+- [ ] **Access Policy:** Default-deny with per-service allowlists? How to expose monitoring/observability endpoints safely?
+
+### Entry 14 — Simulation, Digital Twins, and X-in-the-Loop
+- [ ] **Simulation Scope:** Which levels to prioritize? (SIL, PIL, HIL)
+- [ ] **Tooling Preference:** ROS 2/Gazebo, QEMU/KVM, or lightweight containerized sims?
+- [ ] **Location:** Run sims in cloud vs. HomeLab vs. colo? When to offload to cloud for scale?
+- [ ] **Fidelity vs. Cost:** Accept lower-fidelity sims for cost, or require high-fidelity even if pricier?
+- [ ] **Connectivity:** Should sims be reachable over the same VPN/tunnel fabric as prod/lab services?
+- [ ] **CI Integration:** Run sims in CI (headless) or keep as manual/periodic jobs?
+
+---
 
 ### 1) Site Foundations
 - [ ] Validate `baseURL`, language settings, and site params in `hugo.toml`.
