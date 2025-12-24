@@ -2,3 +2,28 @@
 public/
 .hugo_build.lock
 resources/_gen/
+
+# Lab environment runtime files
+lab/data/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
