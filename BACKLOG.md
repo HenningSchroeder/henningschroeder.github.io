@@ -36,7 +36,26 @@ hugo --minify
 - [ ] Investigate if and how AI agents can operate as coworker and support, ideally running from a local ollama (or propose a better solution) based local AI accelerator.
 - [ ] Main OS will be Linux Ubuntu LTS, but reason what can be done with Win11, QNX, ROS2 and Android.
 
-### Blog Series — Deployment Infrastructure
+
+#### Entry 00 — Local AI with Ollama
+- [ ] Craft a comprehensive blog series on utilizing Ollama for local AI workflows:
+	- Start with basic prompt usage via curl and HTTP API.
+	- Provide examples for:
+		- Coding a Python script
+		- Creating an HTML5 App
+		- Rendering a picture
+		- Designing a logo
+		- Transcribing an audio file
+		- Analyzing a picture
+		- Reviewing a pull request with different expert roles (code, security, UX/DX, documentation, architecture, quality)
+	- Discuss model selection for each use case (e.g., CodeLlama, Mistral, Whisper, Stable Diffusion, etc.).
+	- Survey frameworks/libraries for data exchange (e.g., requests, PIL, ffmpeg, langchain, llama-index, etc.).
+	- Introduce agents, Model Context Protocol (MCP), Retrieval Augmented Generation (RAG), and vector databases for advanced workflows.
+	- Establish an offline infrastructure for autonomous, complex task handling.
+	- Create Architecture Decision Records (ADR) where appropriate.
+	- Provide working, minimal PoC examples for each use case to verify viability and support design decisions.
+	- Drive towards a consistent system design, culminating in a command-line tool/library for daily work.
+	- Ensure all usages have simple, reproducible demos and documentation.
 
 Each entry aims to: provide setup/config instructions, include tested code samples, capture learnings as an ADR, and link references.
 

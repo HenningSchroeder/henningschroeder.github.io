@@ -37,26 +37,28 @@
         <h1>🚀 Lab Baseline - Deployment Infrastructure</h1>
         <p>Welcome to the Lab Baseline environment. This is a foundational setup for exploring deployment automation and Infrastructure as Code.</p>
         
+        <strong>Nginx is running on <code>http://localhost:8080/</code></strong></p>
+
         <h2>Available Endpoints:</h2>
-        
+
         <div class="endpoint">
-            <strong>Main Page:</strong> <code>http://localhost/</code><br>
-            This page you're viewing now.
+            <strong>Main Page:</strong> <code>http://localhost:8080/</code><br>
+            This page (Nginx static content).
         </div>
-        
+
         <div class="endpoint">
-            <strong>API Root:</strong> <code>http://localhost/api/</code><br>
-            Returns basic API information and timestamp.
+            <strong>API Root:</strong> <code>http://localhost:8081/</code><br>
+            FastAPI root endpoint (separate container, port 8081).
         </div>
-        
+
         <div class="endpoint">
-            <strong>Health Check:</strong> <code>http://localhost/api/health</code><br>
-            Returns service health status.
+            <strong>Health Check:</strong> <code>http://localhost:8081/health</code><br>
+            Returns service health status from FastAPI.
         </div>
-        
+
         <div class="endpoint">
-            <strong>Service Info:</strong> <code>http://localhost/api/info</code><br>
-            Returns detailed service information.
+            <strong>Service Info:</strong> <code>http://localhost:8081/info</code><br>
+            Returns detailed service information from FastAPI.
         </div>
 
         <h2>Stack Components:</h2>
@@ -65,11 +67,17 @@
             <li><strong>FastAPI:</strong> Python-based REST API backend</li>
         </ul>
 
+        <h2>Stack Components:</h2>
+        <ul>
+            <li><strong>Nginx:</strong> Reverse proxy and static file server (port 8080)</li>
+            <li><strong>FastAPI:</strong> Python-based REST API backend (port 8081)</li>
+        </ul>
+
         <h2>Quick Test:</h2>
         <p>Try these commands:</p>
-        <pre><code>curl http://localhost/api/
-curl http://localhost/api/health
-curl http://localhost/api/info</code></pre>
+        <pre><code>curl http://localhost:8081/
+curl http://localhost:8081/health
+curl http://localhost:8081/info</code></pre>
     </div>
 </body>
 </html>

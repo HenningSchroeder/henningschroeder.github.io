@@ -1,3 +1,36 @@
+## Group-Based Write Access for Dockge
+
+To allow Dockge (or other containers) to write to /opt/stacks using a group:
+
+1. **Create the group and set permissions:**
+   ```sh
+   sudo groupadd dockge
+   sudo chown :dockge /opt/stacks
+   sudo chmod 2775 /opt/stacks
+   ```
+   The `2` in `2775` ensures new files/folders inherit the group.
+
+2. **Add your user to the group:**
+   ```sh
+   sudo usermod -aG dockge $USER
+   ```
+   Log out and back in, or run `newgrp dockge` to activate the group in your shell.
+
+3. **Configure the container to use the group:**
+   - Find the group ID:
+     ```sh
+     getent group dockge
+     ```
+     Example output: `dockge:x:1234:` (1234 is the GID)
+   - In your compose file, set:
+     ```yaml
+     user: "1000:1234"  # Replace 1000 with your UID, 1234 with the dockge GID
+     volumes:
+       - /opt/stacks:/opt/stacks
+     ```
+   - Or set the GID via environment variable if supported by the container.
+
+Now, Dockge can write to /opt/stacks as long as the container process runs with the dockge group GID.
 # Lab Environment - Deployment Infrastructure
 
 This directory contains the code and configuration files for the Lab Baseline environment described in blog post [0002 - Deployment Infrastructure: Lab Baseline](../content/posts/0002-deployment-infrastructure-lab-baseline/index.md).

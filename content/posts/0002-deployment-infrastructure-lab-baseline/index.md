@@ -2,7 +2,7 @@
 date = '2025-12-24T00:48:00+00:00'
 draft = true
 title = '0002 - Deployment Infrastructure: Lab Baseline'
-tags = ['infrastructure', 'deployment', 'docker', 'ubuntu', 'devops']
+tags = ['infrastructure', 'deployment', 'podman', 'ubuntu', 'devops']
 categories = ['Infrastructure as Code']
 +++
 
@@ -10,12 +10,12 @@ Welcome to the first entry in our Deployment Infrastructure blog series. This se
 
 ## Overview
 
-In this entry, we establish a **Lab Baseline**—a foundational development environment that serves as the starting point for exploring deployment automation, containerization, and infrastructure management. We'll set up an Ubuntu LTS virtual machine with Docker and Docker Compose, then deploy a simple multi-service stack to validate our setup.
+In this entry, we establish a **Lab Baseline**—a foundational development environment that serves as the starting point for exploring deployment automation, containerization, and infrastructure management. We'll set up an Ubuntu LTS virtual machine with Podman and Podman Compose, then deploy a simple multi-service stack to validate our setup.
 
 ## Objectives
 
 - Set up an Ubuntu 24.04 LTS virtual machine (compatible with 25.10)
-- Install and configure Docker and Docker Compose
+- Install and configure Podman and Podman Compose
 - Deploy a sample multi-service application stack
 - Document the process and capture key decisions
 - Create reusable artifacts (Compose files, Makefiles, runbooks)
@@ -39,7 +39,7 @@ Before starting, ensure you have:
 We're using **Ubuntu 24.04 LTS** as our base operating system. Ubuntu LTS (Long Term Support) provides:
 - 5 years of security updates and bug fixes
 - Wide community support and documentation
-- Excellent Docker and container ecosystem compatibility
+- Excellent OCI container ecosystem compatibility (Podman is Docker-compatible)
 - Strong package availability for development tools
 
 **VM Configuration:**
@@ -87,7 +87,48 @@ sudo apt install -y \
 sudo reboot
 ```
 
-## Part 2: Docker Installation
+## Part 2: Podman Installation
+
+We'll install Podman and Podman Compose using the official Ubuntu repositories.
+
+### Step 1: Install Podman and Podman Compose
+
+```bash
+# Update package index
+sudo apt update
+
+# Install Podman and Podman Compose
+sudo apt install -y podman podman-compose
+
+# Verify installation
+podman --version
+podman-compose --version
+```
+
+### Step 2: Post-Installation Configuration
+
+```bash
+# Enable user namespaces for rootless containers (recommended)
+sudo sysctl -w user.max_user_namespaces=28633
+
+# Add your user to the appropriate group (if needed)
+sudo usermod -aG podman $USER
+
+# Enable Podman socket for Docker compatibility (optional)
+systemctl --user enable --now podman.socket
+
+# Log out and back in for group changes to take effect
+```
+
+### Step 3: Verify Podman Installation
+
+```bash
+# Test Podman installation
+podman run --rm hello-world
+
+# Check Podman service status
+systemctl --user status podman.socket
+```
 
 We'll install Docker Engine using the official Docker repository to ensure we get the latest stable version.
 
@@ -344,9 +385,9 @@ curl http://localhost/api/info</code></pre>
 </html>
 ```
 
-### Docker Compose Configuration
+### Podman Compose Configuration
 
-**`~/lab/docker-compose.yml`:**
+**`~/lab/podman-compose.yml`:**
 ```yaml
 version: '3.9'
 
@@ -390,7 +431,7 @@ networks:
     driver: bridge
 ```
 
-### Makefile for Common Operations
+### Makefile for Common Operations (Podman)
 
 **`~/lab/Makefile`:**
 ```makefile
@@ -402,49 +443,50 @@ help: ## Show this help message
 	@echo 'Available targets:'
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
+down: ## Stop all services
 up: ## Start all services
-	docker compose up -d
+  podman-compose -f podman-compose.yml up -d
 
 down: ## Stop all services
-	docker compose down
+  podman-compose -f podman-compose.yml down
 
 restart: down up ## Restart all services
 
 logs: ## Show logs for all services
-	docker compose logs -f
+  podman-compose -f podman-compose.yml logs -f
 
 ps: ## Show running containers
-	docker compose ps
+  podman-compose -f podman-compose.yml ps
 
 build: ## Build/rebuild all services
-	docker compose build
+  podman-compose -f podman-compose.yml build
 
 rebuild: ## Rebuild and restart services
-	docker compose up -d --build
+  podman-compose -f podman-compose.yml up -d --build
 
 clean: ## Remove all containers, networks, and volumes
-	docker compose down -v
-	docker system prune -f
+  podman-compose -f podman-compose.yml down -v
+  podman system prune -f
 
 status: ## Show service status
-	@echo "=== Docker Compose Services ==="
-	@docker compose ps
-	@echo ""
-	@echo "=== Docker System Info ==="
-	@docker system df
+  @echo "=== Podman Compose Services ==="
+  @podman-compose -f podman-compose.yml ps
+  @echo ""
+  @echo "=== Podman System Info ==="
+  @podman system df
 
 test: ## Test the deployed services
-	@echo "Testing Nginx..."
-	@curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost/
-	@echo ""
-	@echo "Testing API root..."
-	@curl -s http://localhost/api/ | python3 -m json.tool
-	@echo ""
-	@echo "Testing API health..."
-	@curl -s http://localhost/api/health | python3 -m json.tool
-	@echo ""
-	@echo "Testing API info..."
-	@curl -s http://localhost/api/info | python3 -m json.tool
+  @echo "Testing Nginx..."
+  @curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost/
+  @echo ""
+  @echo "Testing API root..."
+  @curl -s http://localhost/api/ | python3 -m json.tool
+  @echo ""
+  @echo "Testing API health..."
+  @curl -s http://localhost/api/health | python3 -m json.tool
+  @echo ""
+  @echo "Testing API info..."
+  @curl -s http://localhost/api/info | python3 -m json.tool
 ```
 
 ## Part 4: Deployment and Validation
@@ -454,11 +496,12 @@ test: ## Test the deployed services
 ```bash
 cd ~/lab
 
+
 # Build and start services
 make up
 
-# Or using docker compose directly:
-# docker compose up -d --build
+# Or using podman-compose directly:
+# podman-compose -f podman-compose.yml up -d --build
 
 # Check service status
 make ps
@@ -480,11 +523,11 @@ curl http://localhost/api/health
 curl http://localhost/api/info
 
 # Check container health
-docker ps
+podman ps
 
 # Inspect logs
-docker logs lab-nginx
-docker logs lab-api
+podman logs lab-nginx
+podman logs lab-api
 ```
 
 Expected output:
@@ -514,7 +557,7 @@ We need a consistent, reproducible development and testing environment for explo
 We will use:
 1. **Ubuntu 24.04 LTS** as the base operating system
 2. **KVM/libvirt** as the preferred virtualization platform
-3. **Docker Engine** with **Docker Compose** for container management
+3. **Podman** with **Podman Compose** for container management (due to Docker's licensing politics)
 4. **Virtual Machine** approach rather than bare metal
 
 #### Rationale
@@ -536,12 +579,14 @@ We will use:
   - Additional resource consumption
 - **Decision:** VM approach provides better flexibility for a lab environment where experimentation and learning are priorities
 
-**Docker Compose:**
+
+**Podman Compose:**
 - Simpler than Kubernetes for initial learning
 - Declarative configuration
 - Local development friendly
 - Production-capable for smaller deployments
 - Easy transition to Swarm or Kubernetes later
+- No licensing issues (unlike Docker)
 
 **Resource Allocation (2 vCPU, 4GB RAM, 20GB disk):**
 - Sufficient for development workloads
@@ -570,7 +615,7 @@ We will use:
 #### Alternatives Considered
 
 1. **Bare Metal:** Rejected due to lack of isolation and difficulty in providing consistent instructions across different hardware
-2. **Docker Desktop:** Rejected due to licensing considerations and desire for production-similar setup
+2. **Docker Desktop:** Rejected due to licensing considerations and desire for production-similar setup. Podman is used instead to avoid Docker's licensing politics.
 3. **Kubernetes from Start:** Rejected as too complex for initial baseline; will be introduced gradually
 4. **Windows WSL2:** Valid alternative, will be covered in OS Support Matrix (Entry 12)
 
@@ -578,34 +623,40 @@ We will use:
 
 ### Quick Reference
 
+
 **Start Services:**
 ```bash
 cd ~/lab && make up
 ```
+
 
 **Stop Services:**
 ```bash
 cd ~/lab && make down
 ```
 
+
 **View Logs:**
 ```bash
 make logs                  # All services
-docker logs lab-nginx      # Nginx only
-docker logs lab-api        # API only
+podman logs lab-nginx      # Nginx only
+podman logs lab-api        # API only
 ```
+
 
 **Rebuild After Code Changes:**
 ```bash
 make rebuild
 ```
 
+
 **Check Status:**
 ```bash
 make status
-docker ps
-docker compose ps
+podman ps
+podman-compose -f podman-compose.yml ps
 ```
+
 
 **Clean Up Everything:**
 ```bash
@@ -616,16 +667,18 @@ make clean
 
 **Problem: Containers won't start**
 ```bash
+
 # Check logs
-docker compose logs
+podman-compose -f podman-compose.yml logs
 
 # Check system resources
 docker system df
 free -h
 df -h
 
-# Verify Docker is running
-sudo systemctl status docker
+
+# Verify Podman is running
+systemctl --user status podman.socket
 ```
 
 **Problem: Port already in use**
@@ -649,22 +702,26 @@ newgrp docker
 
 **Problem: API not responding**
 ```bash
+
 # Check if container is running
-docker ps | grep lab-api
+podman ps | grep lab-api
+
 
 # Check container logs
-docker logs lab-api
+podman logs lab-api
+
 
 # Exec into container for debugging
-docker exec -it lab-api sh
+podman exec -it lab-api sh
 ```
 
 ### Maintenance
 
+
 **Update Images:**
 ```bash
-docker compose pull
-docker compose up -d
+podman-compose -f podman-compose.yml pull
+podman-compose -f podman-compose.yml up -d
 ```
 
 **Backup Configuration:**
@@ -672,10 +729,11 @@ docker compose up -d
 tar -czf lab-backup-$(date +%Y%m%d).tar.gz ~/lab
 ```
 
+
 **Clean Old Images:**
 ```bash
-docker image prune -a
-docker system prune -a
+podman image prune -a
+podman system prune -a
 ```
 
 ## Part 7: AI-Assisted Development

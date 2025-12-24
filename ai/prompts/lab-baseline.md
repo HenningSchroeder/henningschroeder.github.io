@@ -19,6 +19,24 @@ ollama pull codellama
 ollama pull mistral
 ```
 
+**Pull Models via API:**
+```bash
+# Pull CodeLlama model via API (assuming Ollama on dsk-001)
+curl -X POST http://dsk-001:11434/api/pull -d '{
+  "name": "codellama"
+}'
+
+# Pull Mistral model via API
+curl -X POST http://dsk-001:11434/api/pull -d '{
+  "name": "mistral"
+}'
+
+# Pull specific model version
+curl -X POST http://dsk-001:11434/api/pull -d '{
+  "name": "codellama:7b"
+}'
+```
+
 ## Prompt Templates
 
 ### 1. Dockerfile Generation
@@ -120,11 +138,13 @@ Generate a troubleshooting section for common Docker and Docker Compose issues:
 - Permission denied errors
 - Networking issues
 - Resource constraints
+- Differences between docker and podman
 
 For each issue, provide:
 - Symptoms
 - Diagnostic commands
 - Resolution steps
+- create a minimal python script which gathers the info from a running system and pushes the data with matching prompt into the ollama  instance for analysis.
 ```
 
 ### 8. Architecture Decision Record (ADR)
@@ -148,6 +168,59 @@ Format as a structured ADR with:
 ## Usage Examples
 
 ### Interactive CLI Usage
+
+```bash
+# Start interactive session
+ollama run codellama
+
+# Paste prompt, review output, iterate
+```
+
+### Ollama in Container (Podman Compose)
+
+For environments using Podman instead of Docker, you can run Ollama in a container:
+
+**podman-compose.yml:**
+```yaml
+version: '3.8'
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  ollama-data:
+```
+
+**Usage:**
+```bash
+# Start Ollama service
+podman-compose up -d
+
+# Pull models into container
+podman exec -it ollama ollama pull codellama
+podman exec -it ollama ollama pull mistral
+
+# Interactive session
+podman exec -it ollama ollama run codellama
+
+# API access (same as native install)
+curl http://localhost:11434/api/generate -d '{
+  "model": "codellama",
+  "prompt": "Your prompt here",
+  "stream": false
+}'
+
+# Stop service
+podman-compose down
+```
+
+**Note**: Replace `podman-compose` with `docker-compose` if using Docker.
 
 ```bash
 # Start interactive session
